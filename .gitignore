@@ -1,0 +1,15 @@
+node_modules
+.next
+out
+*.tsbuildinfo
+next-env.d.ts
+.env
+.env.local
+.env*.local
+.vercel
+
+# Archivos internos / de desarrollo: no van al repo
+CLAUDE.md
+.claude/
+.local/
+AGENTS.md
