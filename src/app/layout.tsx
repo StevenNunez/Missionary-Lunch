@@ -7,13 +7,26 @@ import "./globals.css";
 const display = Bricolage_Grotesque({ subsets: ["latin"], variable: "--font-display", display: "swap" });
 const cuerpo = Hanken_Grotesk({ subsets: ["latin"], variable: "--font-body", display: "swap" });
 
+const SITIO = (process.env.NEXT_PUBLIC_SITE_URL || "https://missionarylunch.teolabs.app").replace(/\/$/, "");
+const DESCRIPCION =
+  "Anótate para dar almuerzo a los misioneros de tu barrio. Calendario por barrio, confirmación a diario y recordatorios en tu celular. Gratis.";
+
 export const metadata: Metadata = {
-  title: { default: "Missionary Lunch", template: "%s · Missionary Lunch" },
-  description: "Anótate para dar almuerzo a los misioneros de tu barrio y confirma a diario.",
+  metadataBase: new URL(SITIO),
+  title: { default: "Missionary Lunch · Almuerzo para los misioneros de tu barrio", template: "%s · Missionary Lunch" },
+  description: DESCRIPCION,
   applicationName: "Missionary Lunch",
   manifest: "/manifest.webmanifest",
+  alternates: { canonical: "/" },
   appleWebApp: { capable: true, title: "Missionary Lunch", statusBarStyle: "black-translucent" },
-  robots: { index: false, follow: false },
+  // La portada se puede encontrar; los calendarios de cada barrio (/b/…) se marcan privados en su propio layout.
+  robots: { index: true, follow: true },
+  openGraph: {
+    type: "website", locale: "es_CL", siteName: "Missionary Lunch", url: "/",
+    title: "Missionary Lunch · Almuerzo para los misioneros de tu barrio",
+    description: DESCRIPCION,
+  },
+  twitter: { card: "summary_large_image", title: "Missionary Lunch", description: DESCRIPCION },
 };
 
 export const viewport: Viewport = {

@@ -98,7 +98,9 @@ details[open] summary .chev{transform:rotate(180deg)}
 label{display:grid;gap:6px;font-weight:800;font-size:14px}
 label .hint{font-weight:400;color:var(--muted)}
 input,textarea,select.f{font:inherit;color:var(--ink);background:var(--soft);border:2px solid transparent;border-radius:14px;padding:12px 14px;width:100%}
-input:focus,textarea:focus{border-color:var(--ok);outline:none}
+input:focus,textarea:focus{border-color:var(--ok);outline:none;box-shadow:0 0 0 3px var(--ok-soft)}
+input:focus-visible,textarea:focus-visible{outline:3px solid var(--sun);outline-offset:1px}
+summary:focus-visible{outline:3px solid var(--sun);outline-offset:2px;border-radius:12px}
 button:focus-visible,a:focus-visible,select:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
 .choices{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .choice{position:relative;display:grid;justify-items:center;gap:6px;text-align:center;background:var(--soft);border:2px solid transparent;border-radius:16px;padding:12px 6px;font-weight:800;font-size:13px;cursor:pointer;line-height:1.2}

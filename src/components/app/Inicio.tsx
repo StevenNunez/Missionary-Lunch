@@ -206,11 +206,12 @@ export default function Inicio() {
         {repo.modo === "local" && (
           <div className="demo-bar"><span>Modo demo: los datos quedan solo en este navegador.</span></div>
         )}
-        <div className="entra" style={{ display: "contents" }}>
-        <TarjetaInstalar />
-        {sesion?.nombre && <TarjetaAvisos activo={repo.modo === "supabase"} />}
         {cuerpo}
-        {sesion?.nombre && <AjusteAvisos activo={repo.modo === "supabase"} />}
+        {/* Las invitaciones a instalar y activar avisos van debajo: aparecen tarde y no deben empujar lo que ya se está leyendo. */}
+        <div className="entra" style={{ display: "contents" }}>
+          <TarjetaInstalar />
+          {sesion?.nombre && <TarjetaAvisos activo={repo.modo === "supabase"} />}
+          {sesion?.nombre && <AjusteAvisos activo={repo.modo === "supabase"} />}
         </div>
         <Creditos />
       </div></main>
