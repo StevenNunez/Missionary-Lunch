@@ -7,8 +7,8 @@
   --bg:#f4f5f7; --card:#ffffff; --soft:#e9ecf0; --ink:#101820; --muted:#5b6672; --line:#dde1e6;
   --sun:#ff5a3c; --sun-ink:#101820; --go:#1f9d6b; --go-soft:#dff4ea; --held:#e9a400; --held-soft:#fff3d1; --ok:#1c4f7a; --ok-soft:#dde9f4; --off:#a3acb7; --danger:#c2453a;
   --shadow:0 6px 24px rgba(16,24,32,.10);
-  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
-  --f-body:"Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-display:var(--font-display), "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:var(--font-body), "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --band:#0a1017; --band-ink:#fff9f5; --band-soft:#9eacbb;
@@ -183,3 +183,15 @@ button{font:inherit}
   .afiche h1{font-size:44px}
   .afiche-pasos{font-size:20px}
 }
+
+/* Primera impresión: lo que aparece después de cargar entra suave, y los huecos se ven como huecos (no como un cartel de "Cargando"). */
+@media (prefers-reduced-motion:no-preference){
+  .entra{animation:entra .35s ease-out both}
+  @keyframes entra{from{opacity:0;transform:translateY(8px)}}
+  .esqueleto{animation:late 1.4s ease-in-out infinite}
+  @keyframes late{50%{opacity:.55}}
+}
+.esqueleto{min-height:64px;border-radius:22px;background:var(--soft)}
+.pasos{display:grid;gap:10px;margin:0;padding:0;list-style:none;counter-reset:p}
+.pasos li{display:grid;grid-template-columns:32px 1fr;gap:12px;align-items:center;counter-increment:p}
+.pasos li::before{content:counter(p);width:32px;height:32px;border-radius:50%;background:var(--sun);color:var(--sun-ink);font-weight:800;display:grid;place-items:center}

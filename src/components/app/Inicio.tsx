@@ -5,10 +5,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Creditos from "@/components/Creditos";
 import { AjusteAvisos, TarjetaAvisos, TarjetaInstalar } from "@/components/Instalar";
-import { Marca, NOMBRE_APP } from "@/components/Marca";
+import { Marca } from "@/components/Marca";
 import { obtenerRepo } from "@/lib/repo";
 import { extraerUnidad } from "@/lib/unidad";
-import { mensajeDe } from "@/lib/util";
+import { guardar, leer, mensajeDe } from "@/lib/util";
 import type { MiBarrio, Sesion } from "@/lib/tipos";
 import BuscarBarrio from "./BuscarBarrio";
 import Login from "./Login";
@@ -17,10 +17,26 @@ const ETIQUETA = { encargado: "Encargado", misionero: "Misionero", miembro: "Mie
 
 type Hallado = { nombre: string; direccion: string };
 
+/** Cómo funciona, en tres pasos: lo primero que ve quien llega por el enlace del grupo. */
+function Pasos() {
+  return (
+    <div className="card" style={{ display: "grid", gap: 12 }}>
+      <span className="h2">Así de simple</span>
+      <ol className="pasos">
+        <li>Busca tu barrio, o abre el enlace que compartió el encargado.</li>
+        <li>Entra con tu nombre y tu número de WhatsApp.</li>
+        <li>Toca un día libre y elige cómo darás el almuerzo.</li>
+      </ol>
+    </div>
+  );
+}
+
 export default function Inicio() {
   const repo = useMemo(() => obtenerRepo(), []);
   const router = useRouter();
   const [listo, setListo] = useState(false);
+  const [conocido, setConocido] = useState(false); // ya entró antes: se reserva el lugar de «Tus barrios»
+  useEffect(() => setConocido(Boolean(leer("am_conocido"))), []);
   const [sesion, setSesion] = useState<Sesion | null>(null);
   const [barrios, setBarrios] = useState<MiBarrio[]>([]);
   const [creando, setCreando] = useState(false);
@@ -36,7 +52,13 @@ export default function Inicio() {
   const cargar = useCallback(async () => {
     const s = await repo.sesion();
     setSesion(s);
-    if (s?.nombre) setBarrios(await repo.misBarrios());
+    if (s?.nombre) {
+      const b = await repo.misBarrios();
+      setBarrios(b);
+      guardar("am_conocido", b.length ? "1" : "");
+    } else {
+      guardar("am_conocido", "");
+    }
     setListo(true);
   }, [repo]);
   useEffect(() => { cargar().catch(() => setListo(true)); }, [cargar]);
@@ -74,7 +96,14 @@ export default function Inicio() {
 
   let cuerpo;
   if (!listo) {
-    cuerpo = <div className="card empty">Cargando…</div>;
+    // El buscador no depende de la sesión: se ve de inmediato. Solo lo personal espera.
+    cuerpo = (
+      <>
+        {conocido && <div className="esqueleto" aria-hidden="true" />}
+        <BuscarBarrio titulo="Busca tu barrio" />
+        <Pasos />
+      </>
+    );
   } else {
     let crear_;
     if (!creando) {
@@ -151,6 +180,7 @@ export default function Inicio() {
           </>
         )}
         <BuscarBarrio titulo={barrios.length ? "Buscar otro barrio" : "Busca tu barrio"} />
+        {barrios.length === 0 && !sesion?.nombre && <Pasos />}
         {barrios.length > 0 && (
           <p className="muted" style={{ margin: 0, textAlign: "center" }}>
             ¿Te cambiaste de sector? Busca tu barrio nuevo arriba; los misioneros entran con el código de misioneros de ese barrio.
@@ -169,17 +199,19 @@ export default function Inicio() {
     <>
       <div className="band"><div className="wrap">
         <div className="band-top"><Marca /></div>
-        <h1>{sesion?.nombre ? `Hola, ${sesion.nombre.split(" ")[0]}` : NOMBRE_APP}</h1>
-        <p className="sub">Organiza y da almuerzo a los misioneros de tu barrio.</p>
+        <h1>{sesion?.nombre ? `Hola, ${sesion.nombre.split(" ")[0]}` : "Almuerzo para los misioneros"}</h1>
+        <p className="sub">Anótate en el calendario de tu barrio en menos de un minuto.</p>
       </div></div>
       <main><div className="wrap stack" style={{ paddingBottom: 32 }}>
         {repo.modo === "local" && (
           <div className="demo-bar"><span>Modo demo: los datos quedan solo en este navegador.</span></div>
         )}
+        <div className="entra" style={{ display: "contents" }}>
         <TarjetaInstalar />
         {sesion?.nombre && <TarjetaAvisos activo={repo.modo === "supabase"} />}
         {cuerpo}
         {sesion?.nombre && <AjusteAvisos activo={repo.modo === "supabase"} />}
+        </div>
         <Creditos />
       </div></main>
     </>

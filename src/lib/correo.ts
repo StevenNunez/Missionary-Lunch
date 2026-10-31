@@ -2,16 +2,23 @@ import nodemailer from "nodemailer";
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
-export const correoConfigurado = () => Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+/**
+ * SMTP de Teo Labs (Zoho, casilla hola@teolabs.app). Acepta los nombres que ya usan las demás apps
+ * (EMAIL_*, ZOHO_SMTP_*) además de SMTP_*, para no inventar variables nuevas en cada proyecto.
+ */
+const env = (...nombres: string[]) => nombres.map((n) => process.env[n]?.trim()).find(Boolean) ?? "";
+const smtp = () => ({
+  host: env("SMTP_HOST", "EMAIL_HOST") || "smtp.zoho.com",
+  port: Number(env("SMTP_PORT", "EMAIL_PORT") || 465),
+  user: env("SMTP_USER", "EMAIL_USER", "ZOHO_SMTP_USER"),
+  pass: env("SMTP_PASS", "EMAIL_PASS", "ZOHO_SMTP_PASS"),
+});
+
+export const correoConfigurado = () => Boolean(smtp().user && smtp().pass);
 
 function transporte() {
-  const port = Number(process.env.SMTP_PORT || 465);
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port,
-    secure: port === 465,
-    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-  });
+  const { host, port, user, pass } = smtp();
+  return nodemailer.createTransport({ host, port, secure: port === 465, auth: { user, pass } });
 }
 
 const PUNTOS = [[37, 99, 235], [168, 85, 247], [34, 197, 94]]; // azul → morado → verde
@@ -41,8 +48,11 @@ export interface CorreoDatos {
   /** Líneas de resumen: [etiqueta, valor] */
   resumen: [string, string][];
   mensaje: string;
-  boton: { texto: string; url: string };
-  texto: string;
+  /** Botón de acción; los correos de código no lo llevan. */
+  boton?: { texto: string; url: string };
+  /** Código para escribir en la app: se muestra grande. */
+  codigo?: string;
+  texto?: string;
 }
 
 export async function enviarCorreo(d: CorreoDatos) {
@@ -64,9 +74,10 @@ export async function enviarCorreo(d: CorreoDatos) {
 <tr><td style="background:#ff5a3c;height:5px;line-height:5px;font-size:0">&nbsp;</td></tr>
 <tr><td style="background:#ffffff;padding:24px">
 <div style="font-size:20px;font-weight:800;color:#101820;margin-bottom:14px">${esc(d.titulo)}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #dde1e6;border-bottom:1px solid #dde1e6;margin-bottom:16px">${filas}</table>
+${filas ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #dde1e6;border-bottom:1px solid #dde1e6;margin-bottom:16px">${filas}</table>` : ""}
 <p style="font-size:15px;color:#101820;line-height:1.5;margin:0 0 20px">${esc(d.mensaje)}</p>
-<a href="${esc(d.boton.url)}" style="display:inline-block;background:#ff5a3c;color:#101820;font-weight:800;text-decoration:none;padding:13px 22px;border-radius:14px;font-size:15px">${esc(d.boton.texto)}</a>
+${d.codigo ? `<div style="background:#f4f5f7;border-radius:14px;padding:16px;text-align:center;font-size:34px;font-weight:800;letter-spacing:10px;color:#101820;font-family:Consolas,Menlo,monospace">${esc(d.codigo)}</div>` : ""}
+${d.boton ? `<a href="${esc(d.boton.url)}" style="display:inline-block;background:#ff5a3c;color:#101820;font-weight:800;text-decoration:none;padding:13px 22px;border-radius:14px;font-size:15px">${esc(d.boton.texto)}</a>` : ""}
 </td></tr>
 <tr><td style="background:#e9ecf0;border-radius:0 0 18px 18px;padding:16px 24px;font-size:12px;color:#5b6672;line-height:1.6">
 Enviado desde Missionary Lunch · <a href="${esc(process.env.NEXT_PUBLIC_SITE_URL || "")}" style="color:#1c4f7a">${esc((process.env.NEXT_PUBLIC_SITE_URL || "").replace(/^https?:\/\//, ""))}</a><br>
@@ -74,10 +85,10 @@ Desarrollado por <a href="https://www.teolabs.app" style="text-decoration:none">
 </td></tr></table></td></tr></table></body></html>`;
 
   await transporte().sendMail({
-    from: process.env.SMTP_FROM || process.env.SMTP_USER,
+    from: process.env.SMTP_FROM || `"Missionary Lunch" <${smtp().user}>`,
     to: d.para,
     subject: d.asunto,
     html,
-    text: `${d.titulo}\n${d.barrio}\n\n${d.resumen.map(([k, v]) => `${k}: ${v}`).join("\n")}\n\n${d.mensaje}\n\n${d.boton.texto}: ${d.boton.url}\n\nDesarrollado por Teo Labs ® — https://www.teolabs.app`,
+    text: `${d.titulo}\n${d.barrio}\n\n${d.resumen.map(([k, v]) => `${k}: ${v}`).join("\n")}\n\n${d.mensaje}\n\n${d.codigo ? `${d.codigo}\n\n` : ""}${d.boton ? `${d.boton.texto}: ${d.boton.url}\n\n` : ""}Desarrollado por Teo Labs ® — https://www.teolabs.app`,
   });
 }

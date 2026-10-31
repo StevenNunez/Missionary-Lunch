@@ -107,7 +107,7 @@ export default function Login({ alEntrar }: { alEntrar: () => void }) {
     <form className="card" style={{ display: "grid", gap: 14 }} onSubmit={verificar}>
       <span className="h2">Revisa tu correo</span>
       <p className="muted" style={{ margin: 0 }}>
-        Enviamos un código a <b>{email}</b>. Escríbelo aquí, o toca el enlace del correo.
+        Enviamos un código de 6 dígitos a <b>{email}</b>. Escríbelo aquí. Si no lo ves, revisa la carpeta de spam.
       </p>
       <label>
         Código

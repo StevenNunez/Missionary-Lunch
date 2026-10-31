@@ -63,11 +63,14 @@ export function repoSupabase(): Repo {
       return j.telefono ?? telefono;
     },
     async enviarCodigo(email) {
-      const { error } = await sb.auth.signInWithOtp({
-        email,
-        options: { emailRedirectTo: `${location.origin}/auth/callback?next=${encodeURIComponent(location.pathname)}` },
+      // El código sale de nuestro propio correo (/api/codigo), sin enlaces mágicos.
+      const res = await fetch("/api/codigo", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }),
       });
-      falla(error);
+      if (!res.ok) {
+        const j = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(j.error ?? "No se pudo enviar el código.");
+      }
     },
     async verificarCodigo(email, codigo) {
       const { error } = await sb.auth.verifyOtp({ email, token: codigo.trim(), type: "email" });
